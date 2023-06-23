@@ -1,51 +1,81 @@
-const express = require("express");
-const Joi = require("joi");
+const express = require('express');
+const Joi = require('joi'); //used for validation
 const app = express();
-
 app.use(express.json());
-
-const courses =[
-    {id:1, name:"course1"},
-    {id:2, name:"course2"},
-    {id:3, name:"course3"},
-];
-
-
-
-app.get("/",(req, res)=>{
-    res.send("Hello All");
+ 
+const books = [
+{title: 'Harry Potter', id: 1},
+{title: 'Twilight', id: 2},
+{title: 'Lorien Legacies', id: 3}
+]
+ 
+//READ Request Handlers
+app.get('/', (req, res) => {
+res.send('Welcome to Haila REST API with Node.js Practice!!');
 });
-app.get("/api/courses",(req, res)=>{
-    res.send(courses);
+ 
+app.get('/api/books', (req,res)=> {
+res.send(books);
 });
-
-app.get("/api/courses/:id", (req, res)=>{
-   const course = courses.find(c => c.id === parseInt(req.params.id));
-   if(!course) res.status(404).send("The Course with the Given id was not found!")
-   res.send(course)
+ 
+app.get('/api/books/:id', (req, res) => {
+const book = books.find(c => c.id === parseInt(req.params.id));
+ 
+if (!book) res.status(404).send('<h2 style="font-family: Malgun Gothic; color: darkred;">Ooops... Cant find what you are looking for!</h2>');
+res.send(book);
 });
-
-app.post("/api/courses",(req, res)=>{
-    const schema ={
-        name:Joi.string().min(3).required()
-    };
-    const result = Joi.valid(req.body, schema);
-    console.log(result);
-    
-    // if(!req.body.name || req.body.length < 3){
-    //     res.status(400).send("Name is required and should be greater than 3 characters");
-    // }
-    const course = {
-        id:courses.length+1, 
-        name:req.body.name,
-    };
-
-    courses.push(course);
-    res.send(course);
+ 
+//CREATE Request Handler
+app.post('/api/books', (req, res)=> {
+ 
+const { error } = validateBook(req.body);
+if (error){
+res.status(400).send(error.details[0].message)
+return;
+}
+const book = {
+id: books.length + 1,
+title: req.body.title
+};
+books.push(book);
+res.send(book);
 });
-
-const port=process.env.PORT || 4000;
-
-app.listen(port, ()=>{
-    console.log(`Server is Running Successfully!!! in PORT ${port}`);
+ 
+//UPDATE Request Handler
+app.put('/api/books/:id', (req, res) => {
+const book = books.find(c=> c.id === parseInt(req.params.id));
+if (!book) res.status(404).send('<h2 style="font-family: Malgun Gothic; color: darkred;">Not Found!! </h2>');
+ 
+const { error } = validateBook(req.body);
+if (error){
+res.status(400).send(error.details[0].message);
+return;
+}
+ 
+book.title = req.body.title;
+res.send(book);
 });
+ 
+//DELETE Request Handler
+app.delete('/api/books/:id', (req, res) => {
+ 
+const book = books.find( c=> c.id === parseInt(req.params.id));
+if(!book) res.status(404).send('<h2 style="font-family: Malgun Gothic; color: darkred;"> Not Found!! </h2>');
+ 
+const index = books.indexOf(book);
+books.splice(index,1);
+ 
+res.send(book);
+});
+ 
+function validateBook(book) {
+const schema = {
+title: Joi.string().min(3).required()
+};
+return Joi.validate(book, schema);
+ 
+}
+ 
+//PORT ENVIRONMENT VARIABLE
+const port = process.env.PORT || 8080;
+app.listen(port, () => console.log(`Listening on port ${port}..`));
